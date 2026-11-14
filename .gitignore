@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Local model runtimes, weights, and caches
+.local-runtime/
+.ollama-models/
+.models/
+models/
+
+# Local configuration and experiment outputs
+.env
+.env.*
+!.env.example
+outputs/
+logs/
+*.jsonl
+*.log
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
