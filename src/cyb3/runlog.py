@@ -33,6 +33,7 @@ class RunRecord:
     trace_path: str | None = None
 
     def __post_init__(self) -> None:
+        """Reject invalid run data as soon as a record is created."""
         if not self.challenge_id.strip():
             raise ValueError("challenge_id must not be empty")
         if not self.harness_id.strip():
@@ -47,6 +48,7 @@ class RunRecord:
             raise ValueError("elapsed_seconds must not be negative")
         if self.cost_usd is not None and self.cost_usd < 0:
             raise ValueError("cost_usd must not be negative")
+        # Token counts are optional, but any recorded count must be non-negative.
         for name, value in (
             ("input_tokens", self.input_tokens),
             ("output_tokens", self.output_tokens),
@@ -65,4 +67,5 @@ def append_run(record: RunRecord, path: str | Path) -> None:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("a", encoding="utf-8") as stream:
+        # Convert the dataclass fields into a plain dictionary before JSON encoding.
         stream.write(json.dumps(asdict(record), ensure_ascii=False) + "\n")

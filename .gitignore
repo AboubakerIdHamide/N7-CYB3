@@ -22,6 +22,10 @@ logs/
 *.jsonl
 *.log
 
+# Generated local challenge binary and flag
+challenges/buffer_overflow_0/vuln
+challenges/buffer_overflow_0/flag.txt
+
 # Editors and operating systems
 .idea/
 .vscode/

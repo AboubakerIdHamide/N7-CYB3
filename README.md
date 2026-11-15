@@ -5,8 +5,11 @@ This is a scientific evaluation project, not a production penetration-testing pr
 ## Current status
 
 - Research question: a working rephrasing of the teacher's CYB-3 question is in `RESEARCH_PLAN_DRAFT.md`.
-- No agent, model, challenge set, or harness has been selected yet.
-- The first code component records run outcomes. It does not connect to a model, execute tools, or contact a target.
+- Candidate model: `qwen3:1.7b` through local Ollama. This is a feasibility choice, not yet the final experimental model.
+- A local Buffer Overflow 0 teaching target is now scaffolded under `challenges/buffer_overflow_0/`. It is a candidate for the first pilot, not yet a final benchmark selection.
+- A first restricted agent tool wrapper is in place; the benchmark protocol and second harness are still to be designed before the main experiment.
+- The first agent pilot ran but did not solve the challenge; its summary and evidence are in `results/pilots/2026-11-15-attempt-001.md`.
+- The code now includes a harmless local tool-call pilot. It does not contact a target or run security actions.
 
 ## Safety and scope
 
@@ -19,9 +22,23 @@ When the experiment is eventually run, use only public CTF challenges or intenti
 - `pass@1`, `pass^k`, steps, cost per solved challenge, and the share of failures attributable to the harness.
 - At least three seeds, a baseline, an ablation, error analysis, and reproducible configuration.
 
-## First code component
+## Current code components
 
-`src/cyb3/runlog.py` defines a run record and appends records to JSON Lines. It is deliberately independent of the model provider and lab. Later, an experiment runner can call this logger after a run.
+`src/cyb3/runlog.py` defines a run record and appends records to JSON Lines. It is deliberately independent of the model provider and lab.
+
+`scripts/local_tool_pilot.py` sends a calculator-only tool call to the local Ollama service, runs that allowlisted addition, and returns the result to the model. On 2026-11-15, `qwen3:1.7b` requested `add_numbers(23, 19)`, the script returned `42`, and the model replied with the correct sum. This confirms the local model-tool-model loop works; it is not evidence of CTF-solving ability.
+
+`challenges/buffer_overflow_0/` contains a deliberately vulnerable, local-only C challenge and a fake flag template. Its Docker image was built and checked with networking disabled and container resource limits. The first restricted agent wrapper is now in place; do not expose an unrestricted shell to the model.
+
+`scripts/local_ctf_agent.py` is the first restricted agent prototype. It gives the local Ollama model only two fixed tools: read this one C source file, and send up to 120 printable ASCII characters to the fixed Docker image. It allows at most six tool actions per attempt. The Docker command is hard-coded, uses no shell or host mounts, never pulls images, disables container networking, and applies non-root, read-only, capability, process, memory, CPU, and timeout limits. The script records a JSONL run summary and per-action trace under ignored `outputs/`.
+
+To start one pilot attempt, ensure Ollama is running and the Docker image has been built, then run from the project root:
+
+```sh
+python3 scripts/local_ctf_agent.py
+```
+
+This is a feasibility prototype, not yet the final benchmark harness: it has one fixed seed, one attempt, and one tool configuration. If run through Codex, Docker access may require approval because the restricted command sandbox blocks Docker's socket; running it in your own terminal uses your host's Docker permissions. Do not use it for other targets or give the model an unrestricted shell.
 
 ## Decisions still open
 
