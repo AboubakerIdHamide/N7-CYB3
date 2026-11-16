@@ -9,6 +9,7 @@ This is a scientific evaluation project, not a production penetration-testing pr
 - A local Buffer Overflow 0 teaching target is now scaffolded under `challenges/buffer_overflow_0/`. It is a candidate for the first pilot, not yet a final benchmark selection.
 - A first restricted agent tool wrapper is in place; the benchmark protocol and second harness are still to be designed before the main experiment.
 - The first agent pilot ran but did not solve the challenge; its summary and evidence are in `results/pilots/2026-11-15-attempt-001.md`.
+- A second pilot hit the six-action limit after repeating short inputs; its trace and logging issues are recorded in `results/pilots/2026-11-16-attempt-002.md`.
 - The code now includes a harmless local tool-call pilot. It does not contact a target or run security actions.
 
 ## Safety and scope
@@ -30,7 +31,7 @@ When the experiment is eventually run, use only public CTF challenges or intenti
 
 `challenges/buffer_overflow_0/` contains a deliberately vulnerable, local-only C challenge and a fake flag template. Its Docker image was built and checked with networking disabled and container resource limits. The first restricted agent wrapper is now in place; do not expose an unrestricted shell to the model.
 
-`scripts/local_ctf_agent.py` is the first restricted agent prototype. It gives the local Ollama model only two fixed tools: read this one C source file, and send up to 120 printable ASCII characters to the fixed Docker image. It allows at most six tool actions per attempt. The Docker command is hard-coded, uses no shell or host mounts, never pulls images, disables container networking, and applies non-root, read-only, capability, process, memory, CPU, and timeout limits. The script records a JSONL run summary and per-action trace under ignored `outputs/`.
+`scripts/local_ctf_agent.py` is the first restricted agent prototype. It gives the local Ollama model only two fixed tools: read this one C source file, and send up to 120 printable ASCII characters to the fixed Docker image. It allows at most six tool actions per attempt. The Docker command is hard-coded, uses no shell or host mounts, never pulls images, disables container networking, and applies non-root, read-only, capability, process, memory, CPU, and timeout limits. The script records a JSONL run summary and a trace of tool calls plus the model's final answer under ignored `outputs/`.
 
 To start one pilot attempt, ensure Ollama is running and the Docker image has been built, then run from the project root:
 

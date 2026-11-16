@@ -236,6 +236,15 @@ def main() -> int:
 
             if not calls:
                 final_text = str(assistant_message.get("content", "")).strip()
+                append_jsonl(
+                    trace_path,
+                    {
+                        "timestamp": now_iso(),
+                        "event": "assistant_final",
+                        "content": final_text,
+                        "success_observed": solved,
+                    },
+                )
                 print(final_text or "The model stopped without a final response.")
                 if solved:
                     stopped_reason = "solved"
@@ -284,6 +293,7 @@ def main() -> int:
                 trace_path,
                 {
                     "timestamp": now_iso(),
+                    "event": "tool_call",
                     "tool": tool_name,
                     "arguments": arguments,
                     "result": str(tool_result)[:MAX_TOOL_OUTPUT_CHARS],
