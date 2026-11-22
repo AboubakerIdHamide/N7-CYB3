@@ -21,6 +21,7 @@ outputs/
 logs/
 *.jsonl
 *.log
+!results/pilots/*.jsonl
 
 # Generated local challenge binary and flag
 challenges/buffer_overflow_0/vuln

@@ -1,0 +1,2 @@
+{"timestamp": "2026-11-21T21:32:19.989277+00:00", "event": "run_started", "challenge_id": "local_integer_wrap", "harness_id": "raw_output_v1", "attempt": 1, "seed": 42, "model_id": "qwen3:1.7b", "agent_prompt_id": "source_guided_v3", "study_id": "calibration-20261121"}
+{"timestamp": "2026-11-21T21:32:20.011440+00:00", "event": "runner_error", "content": "Cannot reach Ollama at 127.0.0.1:11434. Start Ollama and check that the model 'qwen3:1.7b' is installed."}

@@ -26,10 +26,14 @@ class RunRecord:
     finished_at: str
     steps: int
     elapsed_seconds: float
+    agent_prompt_id: str | None = None
+    study_id: str | None = None
     cost_usd: float | None = None
+    api_cost_usd: float | None = None
     input_tokens: int | None = None
     output_tokens: int | None = None
     failure_category: str | None = None
+    failure_events: tuple[str, ...] = ()
     trace_path: str | None = None
 
     def __post_init__(self) -> None:

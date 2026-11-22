@@ -1,6 +1,6 @@
 # CYB-3 research plan — draft
 
-**Status:** planning only. No agent, challenge set, or experiment has been selected or run yet.
+**Status (2026-11-22):** feasibility calibration. The local `qwen3:1.7b` agent loop works, and the local targets pass known-input checks. It failed all ten valid agent calibration runs across integer-wrap and path-traversal tasks. On the path task, prompt v4 fixed malformed source-tool calls, but the matched raw and structured conditions each scored 0/3 across three seeds and exhausted the action limit. Enabling thinking mode did not produce a solve and raised each run to 3–4 minutes. Qwen3 4B loaded on CPU, but two raw-feedback pilots ended without solving; the longer run took 4 minutes 18 seconds and stopped after reading the source. This is a floor effect, not evidence that the harnesses are equivalent. The protocol remains a draft; no main experiment has run. See `results/pilots/` for evidence.
 
 ## 1. Teacher's topic and research question
 
@@ -26,7 +26,7 @@ This rephrases the teacher's question; it does not change the topic.
 
 ## 3. Experiment shape to investigate
 
-The simplest fair comparison is likely to hold the agent/model, challenges, tools, prompts, and run limits constant while changing the tool harness. The baseline should be the simpler harness. The second harness and its exact difference are **not chosen yet**; first we need to review recent research and check what can be run with the available computer and budget.
+The proposed fair comparison holds the agent/model, challenge, tools, prompt, and run limits constant while changing the output format of tool results. The evaluator scores the original challenge output, then redacts the exact dummy flag from all model-visible output. The candidate baseline returns raw standard output and error; the structured condition returns a JSON object with execution metadata and an explicit success indicator; the ablation removes that indicator. The definitions are in `EXPERIMENT_PROTOCOL_DRAFT.md` and remain subject to review before the main runs.
 
 Candidate outcomes:
 
@@ -35,17 +35,23 @@ Candidate outcomes:
 - Cost per successful challenge, number of steps, and elapsed time.
 - Failure categories and the share attributable to the harness.
 
-## 4. Decisions still needed before implementation
+## 4. Decisions still needed before the main experiment
 
-1. Which agent/model can be run reproducibly, and within what budget?
-2. Which CTF challenge suite is legally usable, repeatable, and isolatable?
-3. What exactly are the two tool harnesses, and what single component does the ablation remove?
-4. What are the run limits, reset procedure, random seeds, and success criteria?
+1. The 1.7B model did not solve either calibrated task; the matched path study scored 0/3 in both conditions. Choose a capable model or a task/configuration that produces informative outcomes before freezing.
+2. Decide whether the three candidate tasks form a manageable, honestly scoped suite; do not assume all are needed.
+3. Recheck that only tool-result feedback differs across the baseline, structured condition, and ablation.
+4. Freeze the seeds, action cap, reset procedure, and flag-based success criterion after calibration.
 
-## 5. First code after the protocol is fixed
+## 5. Work after calibration
 
-Build a small experiment runner and log format. Each record should identify the challenge, harness, seed/attempt, success, steps, elapsed time, model usage/cost, and failure category. Pilot the runner on one approved local challenge before the main runs.
+The matrix runner and run-log schema are implemented. Next, choose a model/task setup that can demonstrate at least some successful solves, then rerun a small matched calibration. Freeze the protocol only after this feasibility check; do not spend time or compute on the 27-run matrix while all calibration outcomes are failures.
 
 ## 6. Schedule note
 
-As of 2026-11-14, the November 3 first-results checkpoint has passed. The next checkpoint is November 24 (complete results, ablations, and error analysis), and final submission is December 8. The remaining schedule is tight; prioritize a small, reproducible study and confirm any revised milestone expectations with the course instructor.
+As of 2026-11-21, the November 3 first-results checkpoint has passed and the November 24 checkpoint for complete results, ablations, and error analysis is three days away. Final submission is December 8. The current work is behind the intended research schedule; prioritize a narrow but honest reproducible study, and report any unmet intermediate checkpoint accurately. Do not present exploratory pilots as complete results.
+
+## 7. Immediate recovery sequence
+
+1. Resolve the calibration floor effect: the current 1.7B model failed all ten valid attempts on integer-wrap and path-traversal, including a matched three-seed path comparison.
+2. Confirm the chosen model and task can yield informative outcomes, then freeze the protocol, metrics, and run order before collecting main results.
+3. Run the smallest complete comparison that can be finished and rerun before December 8. Record any reduction in scope as a limitation, not as a result that the study did not measure.
