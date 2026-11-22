@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import json
-import os
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
+from ollama_client import (
+    MODEL,
+    OLLAMA_CHAT_URL,
+    ollama_headers,
+    validate_ollama_settings,
+)
 
-OLLAMA_CHAT_URL = "http://127.0.0.1:11434/api/chat"
-MODEL = os.environ.get("CYB3_OLLAMA_MODEL", "qwen3:1.7b")
 
 # Ollama reads this schema to know which tool the model may request.
 TOOLS = [
@@ -44,15 +47,17 @@ def chat(messages: list[dict[str, object]], *, tools: list[dict[str, object]] | 
     request = Request(
         OLLAMA_CHAT_URL,
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers=ollama_headers(json_body=True),
         method="POST",
     )
     try:
+        validate_ollama_settings()
         with urlopen(request, timeout=300) as response:
             return json.load(response)
     except URLError as error:
         raise RuntimeError(
-            "Cannot reach Ollama at 127.0.0.1:11434. Start Ollama and download the model first."
+            f"Cannot reach the configured Ollama endpoint for model {MODEL!r}. "
+            "Check the endpoint, tunnel, and model service."
         ) from error
 
 

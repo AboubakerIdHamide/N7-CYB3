@@ -5,7 +5,7 @@ This is a scientific evaluation project, not a production penetration-testing pr
 ## Current status
 
 - Research question: a working rephrasing of the teacher's CYB-3 question is in `RESEARCH_PLAN_DRAFT.md`.
-- Candidate model: `qwen3:1.7b` through local Ollama. This is a feasibility choice, not yet the final experimental model.
+- Current local candidate: `qwen3.5:4b` through Ollama. It passed a one-call tool-use smoke check and made real challenge attempts, but its first path-traversal pilot did not retrieve the flag. It remains exploratory, not the final experimental model; see `results/pilots/2026-11-22-qwen35-4b-pilot.md`.
 - Three local, intentionally vulnerable CTF-style targets are scaffolded: Buffer Overflow 0, integer wrap, and path traversal. Their suite selection remains provisional until the protocol is frozen.
 - The restricted agent runner now supports raw output, structured feedback, and a structured-feedback ablation without the flag indicator. The evaluator scores the real output, then removes the exact dummy flag before showing output to the agent, so the explicit indicator is a genuine feedback difference. The comparison design is in `EXPERIMENT_PROTOCOL_DRAFT.md`; it is not frozen and no main experiment has run.
 - `scripts/build_challenges.sh` builds the three local images. `scripts/run_experiment.py` defines the reproducible 27-run matrix and refuses to run while the protocol remains a draft.
@@ -16,8 +16,8 @@ This is a scientific evaluation project, not a production penetration-testing pr
 - Attempt 004 used prompt `source_guided_v2`, but the agent stopped after two harmless inputs without completing the attempt it described. Its trace is recorded in `results/pilots/2026-11-21-attempt-004.md`.
 - Calibration on 2026-11-21 confirmed the local integer-wrap and path-traversal targets work with known inputs, but Qwen 3 1.7B failed every agent run. Prompt v4 fixed malformed source-tool calls in one task, but the model still failed to reason through the challenge. These are calibration failures, not baseline-comparison results; see `results/pilots/2026-11-21-integer-wrap-calibration.md`, `results/pilots/2026-11-21-path-traversal-calibration.md`, and `results/pilots/2026-11-21-path-traversal-calibration-v4.md`.
 - A matched three-seed calibration on path traversal (`source_guided_v4`) produced 0/3 solves with both raw and structured feedback. This is a floor effect, not evidence that the harnesses are equivalent; do not launch the full matrix until model/task feasibility is resolved. See `results/pilots/2026-11-21-path-v4-k3.md`.
-- A Qwen3 1.7B thinking-mode pair also produced no solves and took 3–4 minutes per run. Qwen3 4B loaded on CPU, but two raw-feedback pilots ended before a challenge input; the 768-token retry took over four minutes. These model-feasibility failures and their run traces are in `results/pilots/2026-11-21-path-thinking-pilot.md` and `results/pilots/2026-11-22-path-qwen3-4b-pilot.md`.
-- Prompt/tool-use calibration on 2026-11-22 made the 1.7B agent submit actions, but it still repeated nonexistent paths after tool errors; v5/v6 both failed. Stop repeating local 1.7B trials. Next, check whether Qwen3 4B can run quickly on a Colab GPU, then verify that the Docker challenge remains isolated before moving the full experiment. See `results/pilots/2026-11-22-path-prompt-calibration.md`.
+- A Qwen3 1.7B thinking-mode pair also produced no solves and took 3–4 minutes per run. Qwen3 4B loaded on CPU, but its tool-call smoke checks and two challenge pilots returned no tool calls; it was removed. These failures are recorded in `results/pilots/2026-11-21-path-thinking-pilot.md` and `results/pilots/2026-11-22-path-qwen3-4b-pilot.md`.
+- Prompt/tool-use calibration on 2026-11-22 made the 1.7B agent submit actions, but it still repeated nonexistent paths after tool errors; v5/v6 both failed. See `results/pilots/2026-11-22-path-prompt-calibration.md`. The next model candidate is Qwen3.5 4B, selected using reported BFCL-V4 and TAU2-Bench results plus local memory fit, not the Ollama `tools` tag alone; its first smoke and challenge pilot are recorded in `results/pilots/2026-11-22-qwen35-4b-pilot.md`.
 - The runner now assigns attempt numbers from comparable prior runs, accepts a configurable generation seed, records a final summary after the action limit, and starts a trace before contacting Ollama.
 - The code now includes a harmless local tool-call pilot. It does not contact a target or run security actions.
 
@@ -37,6 +37,8 @@ When the experiment is eventually run, use only public CTF challenges or intenti
 `src/cyb3/runlog.py` defines a run record and appends records to JSON Lines. It is deliberately independent of the model provider and lab.
 
 `scripts/local_tool_pilot.py` sends a calculator-only tool call to the local Ollama service, runs that allowlisted addition, and returns the result to the model. On 2026-11-15, `qwen3:1.7b` requested `add_numbers(23, 19)`, the script returned `42`, and the model replied with the correct sum. This confirms the local model-tool-model loop works; it is not evidence of CTF-solving ability.
+
+The agent can use local Ollama by default or a remote HTTPS Ollama endpoint permitted by that service's policies by setting `CYB3_OLLAMA_URL`, `CYB3_OLLAMA_MODEL`, and (for remote endpoints) `CYB3_OLLAMA_TOKEN`. Google Colab managed runtimes prohibit offering remote web services/proxies, so they cannot be used as an Ollama endpoint for the PC agent.
 
 `challenges/` contains three deliberately vulnerable, local-only C challenges and fake flag templates. Build their fixed images from the project root with:
 

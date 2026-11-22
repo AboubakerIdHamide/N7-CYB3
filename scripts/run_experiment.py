@@ -14,8 +14,15 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import URLError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
+from ollama_client import (
+    MODEL,
+    OLLAMA_TAGS_URL,
+    OLLAMA_VERSION_URL,
+    ollama_headers,
+    validate_ollama_settings,
+)
 from local_ctf_agent import (
     AGENT_PROMPT_ID,
     CHALLENGES,
@@ -24,7 +31,6 @@ from local_ctf_agent import (
     MAX_AGENT_TURNS,
     MAX_INPUT_CHARS,
     MAX_TOOL_CALLS,
-    MODEL,
     SYSTEM_PROMPT,
     user_prompt,
 )
@@ -51,13 +57,16 @@ def command_output(arguments: list[str]) -> str:
 
 
 def check_ollama() -> dict[str, str]:
-    """Confirm Ollama responds locally and has the selected model installed."""
+    """Confirm the configured Ollama service responds and has the selected model."""
     try:
-        with urlopen("http://127.0.0.1:11434/api/tags", timeout=5) as response:
+        validate_ollama_settings()
+        request = Request(OLLAMA_TAGS_URL, headers=ollama_headers())
+        with urlopen(request, timeout=15) as response:
             payload = json.load(response)
     except (URLError, TimeoutError, json.JSONDecodeError) as error:
         raise RuntimeError(
-            "Ollama is not responding at 127.0.0.1:11434; start it before the experiment."
+            "The configured Ollama endpoint is not responding; check the endpoint, "
+            "tunnel, token, and model service before starting the experiment."
         ) from error
     model_info = next(
         (item for item in payload.get("models", []) if item.get("name") == MODEL),
@@ -68,10 +77,17 @@ def check_ollama() -> dict[str, str]:
         raise RuntimeError(
             f"Model {MODEL!r} is not installed. Models found: {model_names}"
         )
+    version_request = Request(OLLAMA_VERSION_URL, headers=ollama_headers())
+    try:
+        with urlopen(version_request, timeout=15) as response:
+            version_payload = json.load(response)
+    except (URLError, TimeoutError, json.JSONDecodeError) as error:
+        raise RuntimeError("Could not read the Ollama server version.") from error
     return {
         "name": str(model_info.get("name", MODEL)),
         "digest": str(model_info.get("digest", "unavailable")),
         "size": str(model_info.get("size", "unavailable")),
+        "server_version": str(version_payload.get("version", "unavailable")),
     }
 
 
@@ -145,7 +161,7 @@ def main() -> int:
         )
         for challenge_id, challenge in CHALLENGES.items()
     }
-    ollama_version = command_output(["ollama", "--version"])
+    ollama_version = model_metadata["server_version"]
     docker_version = command_output(["docker", "--version"])
     run_order = make_run_order()
 
